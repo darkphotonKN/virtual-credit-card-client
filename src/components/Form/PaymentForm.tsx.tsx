@@ -9,7 +9,7 @@ import styles from "./styles.module.css";
 
 import { Field, Form, Formik } from "formik";
 import { useEffect, useState } from "react";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe, PaymentIntentResult } from "@stripe/stripe-js";
 import axios, { AxiosError } from "axios";
 
 type PaymentFormProps = {};
@@ -22,9 +22,11 @@ type PaymentFormInp = {
 };
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_API_KEY ?? "");
+const FIXED_CURRENCY_USD = "usd";
 
 function PaymentForm(props: PaymentFormProps) {
   const [err, setErr] = useState("");
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   useEffect(() => {
     const stripe_api_key = process.env.NEXT_PUBLIC_STRIPE_API_KEY;
@@ -35,7 +37,7 @@ function PaymentForm(props: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
 
-  async function handleSubmit({ amount }: PaymentFormInp) {
+  async function handleSubmit({ amount, name }: PaymentFormInp) {
     if (!stripe || !elements) {
       return;
     }
@@ -61,12 +63,13 @@ function PaymentForm(props: PaymentFormProps) {
         };
         // Call your backend to create the payment intent
         try {
+          // first status of payment intent
           const { data } = await axios.post(
             "http://localhost:6060/api/payment-intent",
             {
               amount,
               payment_method: paymentMethod.id,
-              currency: "usd",
+              currency: FIXED_CURRENCY_USD,
             },
             { headers },
           );
@@ -76,6 +79,32 @@ function PaymentForm(props: PaymentFormProps) {
           }
 
           console.log("payment intent:", data);
+
+          // confirm payment with payment intent id and client secret
+          const confirmPaymentIntentRes = await stripe.confirmCardPayment(
+            data.client_secret,
+            {
+              payment_method: {
+                // use initialized cardElement instance
+                card: cardElement,
+                billing_details: {
+                  name: name,
+                },
+              },
+            },
+          );
+
+          console.log("confirmed payment res:", confirmPaymentIntentRes);
+          if (confirmPaymentIntentRes.error) {
+            setErr(
+              "Error when confirming payment: " + confirmPaymentIntentRes.error,
+            );
+          } else if (
+            confirmPaymentIntentRes.paymentIntent.status === "succeeded"
+          ) {
+            // payment succeeded
+            setPaymentSuccess(true);
+          }
         } catch (err: any) {
           console.log("Error when request payment intent.", err.message);
         }
@@ -109,22 +138,10 @@ function PaymentForm(props: PaymentFormProps) {
 
         {/* Form Status */}
         <div>
-          {err ? (
-            <div
-              style={{
-                color: "red",
-                fontWeight: 500,
-                fontSize: "16px",
-                margin: "15px 0",
-                textAlign: "center",
-                width: "100%",
-              }}
-            >
-              {err}
-            </div>
-          ) : (
-            <div></div>
-          )}
+          {err ? <div className={styles.error + " " + styles.statusMessage}>{err}</div> : null}
+          {paymentSuccess ? (
+            <div className={styles.success + " " + styles.statusMessage}>Your payment was successful.</div>
+          ) : null}
         </div>
 
         <button type="submit" disabled={!stripe}>
