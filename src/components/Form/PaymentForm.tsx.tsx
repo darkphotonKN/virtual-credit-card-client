@@ -8,8 +8,9 @@ import {
 import styles from "./styles.module.css";
 
 import { Field, Form, Formik } from "formik";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
+import axios, { AxiosError } from "axios";
 
 type PaymentFormProps = {};
 
@@ -23,6 +24,8 @@ type PaymentFormInp = {
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_API_KEY ?? "");
 
 function PaymentForm(props: PaymentFormProps) {
+  const [err, setErr] = useState("");
+
   useEffect(() => {
     const stripe_api_key = process.env.NEXT_PUBLIC_STRIPE_API_KEY;
 
@@ -32,9 +35,7 @@ function PaymentForm(props: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
 
-  async function handleSubmit(values: PaymentFormInp) {
-    console.log("Submitted form values:", values);
-
+  async function handleSubmit({ amount }: PaymentFormInp) {
     if (!stripe || !elements) {
       return;
     }
@@ -47,23 +48,37 @@ function PaymentForm(props: PaymentFormProps) {
         card: cardElement,
       });
 
+      console.log("paymentMethod:", paymentMethod);
+
       if (error) {
         console.error(error);
+        setErr(error.message ?? "");
       } else {
+        // headers with stripe secret
+        const headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY ?? ""}`,
+        };
         // Call your backend to create the payment intent
-        const response = await fetch("/api/create-payment-intent", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            amount: 1000, // Amount in cents
-            payment_method: paymentMethod.id,
-          }),
-        });
+        try {
+          const { data } = await axios.post(
+            "http://localhost:6060/api/payment-intent",
+            {
+              amount,
+              payment_method: paymentMethod.id,
+              currency: "usd",
+            },
+            { headers },
+          );
 
-        const paymentIntent = await response.json();
-        console.log(paymentIntent);
+          if (!data.ok) {
+            setErr(data.message);
+          }
+
+          console.log("payment intent:", data);
+        } catch (err: any) {
+          console.log("Error when request payment intent.", err.message);
+        }
       }
     }
   }
@@ -91,6 +106,26 @@ function PaymentForm(props: PaymentFormProps) {
 
         {/* Stripe Element */}
         <CardElement />
+
+        {/* Form Status */}
+        <div>
+          {err ? (
+            <div
+              style={{
+                color: "red",
+                fontWeight: 500,
+                fontSize: "16px",
+                margin: "15px 0",
+                textAlign: "center",
+                width: "100%",
+              }}
+            >
+              {err}
+            </div>
+          ) : (
+            <div></div>
+          )}
+        </div>
 
         <button type="submit" disabled={!stripe}>
           Submit
