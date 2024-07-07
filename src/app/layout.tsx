@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import styles from "./layout.module.css";
+import Link from "next/link";
+import PageTitle from "@/components/Title/PageTitle";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,7 +19,29 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <div className={styles.main}>
+          {/* Main Title */}
+          <div className={styles.title}>E-commerce</div>
+
+          {/* Navigation Bar */}
+          <nav className={styles.nav}>
+            <Link href="/">
+              <div className={styles.navItem}>Home</div>
+            </Link>
+            <Link href="/virtual-terminal">
+              <div className={styles.navItem}>Virtual Terminal</div>
+            </Link>
+            <Link href="/product">
+              <div className={styles.navItem}>Product</div>
+            </Link>
+          </nav>
+
+          {/* Page Title */}
+          <PageTitle />
+          {children}
+        </div>
+      </body>
     </html>
   );
 }

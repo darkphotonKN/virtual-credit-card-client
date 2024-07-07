@@ -9,12 +9,12 @@ import styles from "./styles.module.css";
 
 import { Field, Form, Formik } from "formik";
 import { useEffect, useState } from "react";
-import { loadStripe, PaymentIntentResult } from "@stripe/stripe-js";
-import axios, { AxiosError } from "axios";
+import { loadStripe } from "@stripe/stripe-js";
+import axios from "axios";
 
-type PaymentFormProps = {};
+type ProductFormProps = {};
 
-type PaymentFormInp = {
+type ProductFormInp = {
   amount: number;
   name: string;
   email: string;
@@ -24,20 +24,19 @@ type PaymentFormInp = {
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_API_KEY ?? "");
 const FIXED_CURRENCY_USD = "usd";
 
-function PaymentForm(props: PaymentFormProps) {
+function ProductForm(props: ProductFormProps) {
   const [err, setErr] = useState("");
   const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   useEffect(() => {
     const stripe_api_key = process.env.NEXT_PUBLIC_STRIPE_API_KEY;
-
     console.log("stripe_api_key:", stripe_api_key);
   }, []);
 
   const stripe = useStripe();
   const elements = useElements();
 
-  async function handleSubmit({ amount, name }: PaymentFormInp) {
+  async function handleSubmit({ amount, name }: ProductFormInp) {
     if (!stripe || !elements) {
       return;
     }
@@ -173,10 +172,10 @@ function PaymentForm(props: PaymentFormProps) {
   );
 }
 
-const WrappedPaymentForm: React.FC = () => (
+const WrappedProductForm: React.FC = () => (
   <Elements stripe={stripePromise}>
-    <PaymentForm />
+    <ProductForm />
   </Elements>
 );
 
-export default WrappedPaymentForm;
+export default WrappedProductForm;
