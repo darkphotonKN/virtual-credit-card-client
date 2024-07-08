@@ -15,7 +15,7 @@ import axios from "axios";
 type ProductFormProps = {};
 
 type ProductFormInp = {
-  amount: number;
+  amount: string;
   name: string;
   email: string;
   creditCardNo: number;
@@ -36,7 +36,7 @@ function ProductForm(props: ProductFormProps) {
   const stripe = useStripe();
   const elements = useElements();
 
-  async function handleSubmit({ amount, name }: ProductFormInp) {
+  async function handleSubmit({ name, email }: ProductFormInp) {
     if (!stripe || !elements) {
       return;
     }
@@ -65,7 +65,7 @@ function ProductForm(props: ProductFormProps) {
           const { data } = await axios.post(
             "http://localhost:6060/api/payment-intent",
             {
-              amount,
+              amount: "2000",
               payment_method: paymentMethod.id,
               currency: FIXED_CURRENCY_USD,
             },
@@ -86,7 +86,8 @@ function ProductForm(props: ProductFormProps) {
                 // use initialized cardElement instance
                 card: cardElement,
                 billing_details: {
-                  name: name,
+                  name,
+                  email,
                 },
               },
             },
@@ -113,7 +114,7 @@ function ProductForm(props: ProductFormProps) {
   return (
     <Formik
       initialValues={{
-        amount: 0,
+        amount: "0",
         name: "",
         email: "",
         creditCardNo: 0,
@@ -121,14 +122,7 @@ function ProductForm(props: ProductFormProps) {
       onSubmit={handleSubmit}
     >
       <Form className={styles.formWrapper}>
-        <label htmlFor="amount">Amount</label>
-        <Field
-          className={styles.input}
-          id="amount"
-          name="amount"
-          placeholder="Enter Amount"
-        />
-
+        <div className={styles.price}>Price: $20.00</div>
         <label htmlFor="name">Name</label>
         <Field
           className={styles.input}
