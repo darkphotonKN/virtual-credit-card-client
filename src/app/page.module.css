@@ -1,4 +1,13 @@
 .formArea {
   display: flex;
   justify-content: center;
+  flex-direction: column;
+}
+
+.productList {
+  margin-top: 20px;
+}
+
+.productTitle {
+  margin-bottom: 10px;
 }

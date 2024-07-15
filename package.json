@@ -12,6 +12,7 @@
     "@stripe/react-stripe-js": "^2.7.3",
     "@stripe/stripe-js": "^4.1.0",
     "axios": "^1.7.2",
+    "dayjs": "^1.11.11",
     "formik": "^2.4.6",
     "next": "14.2.4",
     "react": "^18",

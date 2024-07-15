@@ -63,7 +63,7 @@ function ProductForm(props: ProductFormProps) {
         try {
           // first status of payment intent
           const { data } = await axios.post(
-            "http://localhost:6060/api/payment-intent",
+            "http://localhost:6060/api/product/purchase",
             {
               amount: "2000",
               payment_method: paymentMethod.id,
